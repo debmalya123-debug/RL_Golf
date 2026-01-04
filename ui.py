@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-WIDTH, HEIGHT = 800, 750
+WIDTH, HEIGHT = 1280, 720
 BG_COLOR = (34, 139, 34)
 HOLE_COLOR = (20, 20, 20)
 BALL_COLOR = (255, 255, 255)
@@ -63,6 +63,16 @@ class GolfUI:
             pygame.draw.line(self.screen, (30, 120, 30), (x, 0), (x, HEIGHT), 1)
         for y in range(0, HEIGHT, 100):
             pygame.draw.line(self.screen, (30, 120, 30), (0, y), (WIDTH, y), 1)
+
+        # Draw Barriers
+        for b in env.barriers:
+            # b is [x, y, w, h] normalized
+            rect = pygame.Rect(
+                int(b[0]*WIDTH), int(b[1]*HEIGHT),
+                int(b[2]*WIDTH), int(b[3]*HEIGHT)
+            )
+            pygame.draw.rect(self.screen, (139, 69, 19), rect) # Brown wood color
+            pygame.draw.rect(self.screen, (100, 50, 10), rect, 2) # Darker border
 
         hx, hy = env.hole_pos[0][0] * WIDTH, env.hole_pos[0][1] * HEIGHT
         r = env.hole_radius * WIDTH
@@ -129,7 +139,7 @@ class GolfUI:
         s.fill(UI_BG_COLOR)
         self.screen.blit(s, panel_rect)
         
-        text = self.font.render("Instruction: [Left Click] Move Ball | [Right Click] Move Hole | [ENTER] Start Training", True, TEXT_COLOR)
+        text = self.font.render("Instruction: [Left] Ball | [Right] Hole | [Shift+Left] Add Barrier | [Shift+Right] Remove Barrier", True, TEXT_COLOR)
         text_rect = text.get_rect(center=(WIDTH//2, HEIGHT - 35))
         self.screen.blit(text, text_rect)
         

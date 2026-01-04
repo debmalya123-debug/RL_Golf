@@ -14,7 +14,8 @@ def main():
     env = Env(num_envs=NUM_ENVS, width=WIDTH, height=HEIGHT)
     
     ui = GolfUI(screen)
-    agent = PPOAgent(state_dim=2, action_dim=2, lr=5e-4, gamma=0.90) 
+    # State Dim is now 10: 2 (Target) + 8 (Lidar)
+    agent = PPOAgent(state_dim=10, action_dim=2, lr=5e-4, gamma=0.90) 
 
     mode = "setup" 
     user_ball_pos = np.array([0.2, 0.5])
@@ -33,6 +34,9 @@ def main():
     current_logprobs = None
     
     current_trail = []
+    
+    drag_start = None
+    curr_drag = None
 
     running = True
     while running:
@@ -48,13 +52,40 @@ def main():
                 if event.type == pygame.MOUSEBUTTONDOWN and not ui.slider.dragging:
                     mx, my = event.pos
                     if not ui.slider.rect.inflate(20, 20).collidepoint((mx, my)):
+                        keys = pygame.key.get_pressed()
                         norm_pos = np.array([mx/WIDTH, my/HEIGHT])
-                        if event.button == 1: 
-                            user_ball_pos = norm_pos
-                            env.ball_pos[:] = user_ball_pos
-                        elif event.button == 3: 
-                            user_hole_pos = norm_pos
-                            env.hole_pos[:] = user_hole_pos
+                        
+                        if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+                            if event.button == 1: 
+                                drag_start = norm_pos
+                                curr_drag = [norm_pos[0], norm_pos[1], 0, 0]
+                            elif event.button == 3: 
+                                env.remove_barrier(norm_pos)
+                        else:
+                            if event.button == 1: 
+                                user_ball_pos = norm_pos
+                                env.ball_pos[:] = user_ball_pos
+                            elif event.button == 3: 
+                                user_hole_pos = norm_pos
+                                env.hole_pos[:] = user_hole_pos
+                
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if drag_start is not None:
+                        x, y, w, h = curr_drag
+                        if w < 0: x += w; w = -w
+                        if h < 0: y += h; h = -h
+                        
+                        if w > 0.01 and h > 0.01:
+                            env.add_barrier([x, y, w, h])
+                            
+                        drag_start = None
+                        curr_drag = None
+
+                if event.type == pygame.MOUSEMOTION:
+                    if drag_start is not None:
+                         norm_pos = np.array([event.pos[0]/WIDTH, event.pos[1]/HEIGHT])
+                         curr_drag[2] = norm_pos[0] - drag_start[0]
+                         curr_drag[3] = norm_pos[1] - drag_start[1]
                 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
@@ -134,6 +165,16 @@ def main():
         else:
              ui.draw_setup_ball(user_ball_pos, env.ball_radius)
              ui.draw_setup_instructions()
+             if curr_drag is not None:
+                 r = curr_drag[:]
+                 if r[2] < 0: r[0] += r[2]; r[2] = -r[2]
+                 if r[3] < 0: r[1] += r[3]; r[3] = -r[3]
+                 
+                 rect = pygame.Rect(
+                    int(r[0]*WIDTH), int(r[1]*HEIGHT),
+                    int(r[2]*WIDTH), int(r[3]*HEIGHT)
+                 )
+                 pygame.draw.rect(screen, (200, 100, 50), rect, 2)
         
         pygame.display.flip()
 
