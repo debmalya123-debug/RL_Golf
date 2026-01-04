@@ -2,6 +2,12 @@
 
 A vectorized Reinforcement Learning environment where an AI agent learns to play golf using Proximal Policy Optimization (PPO).
 
+
+
+https://github.com/user-attachments/assets/563ec37b-77f2-4d48-9565-8975791f70ee
+
+
+
 ## Project Overview
 
 This project simulates a physics-based 2D golf environment where an intelligent agent learns to putt a ball into a hole. Unlike traditional single-threaded simulations, this project employs a **Vectorized Physics Engine** that simulates **500 parallel processes** simultaneously. This allows the AI to gather experience 500x faster than real-time, leading to rapid convergence.
